@@ -170,7 +170,9 @@ export async function me() {
 
 export async function fetchProgramLevels(): Promise<DropdownOption[]> {
   const res = await fetch(`${API_BASE_URL}/program-levels/`);
+  console.log(API_BASE_URL);
   if (!res.ok) throw new Error(`Program levels failed: ${res.status}`);
+  console.log(res.json);
   return res.json();
 }
 

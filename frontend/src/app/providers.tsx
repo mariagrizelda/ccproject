@@ -16,8 +16,9 @@ function AuthProvider({ children }: Readonly<PropsWithChildren>) {
     const checkAuth = () => {
       const token = localStorage.getItem("accessToken");
       const isAuthRoute = pathname?.startsWith("/auth");
+      const isHealth = pathname?.includes("/health");
       
-      if (!token && !isAuthRoute) {
+      if (!token && !isAuthRoute && !isHealth) {
         router.push("/auth/login");
       } else {
         setIsChecking(false);

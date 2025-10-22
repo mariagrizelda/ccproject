@@ -4,7 +4,7 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Allow public auth routes
-  if (pathname.startsWith("/auth") || pathname.startsWith("/favicon")) {
+  if (pathname.includes("/health") || pathname.startsWith("/auth") || pathname.startsWith("/favicon")) {
     return NextResponse.next();
   }
 
