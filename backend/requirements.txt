@@ -1,4 +1,8 @@
-django 
-djangorestframework 
-django-cors-headers
-djangorestframework-simplejwt
+django>=5.2.7
+djangorestframework>=3.16.1
+django-cors-headers>=4.9.0
+djangorestframework-simplejwt>=5.5.1
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+mysqlclient>=2.2.0
+gunicorn>=21.2.0

@@ -1,6 +1,11 @@
 import { ApiCourse, Course, AssessmentType, AreaOfStudy, Semester } from "@/types/course";
 
-const API_BASE_URL = "http://127.0.0.1:8000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function authHeaders() {
+  const token = typeof globalThis !== "undefined" && (globalThis as any).localStorage ? localStorage.getItem("accessToken") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 // Transform API course to internal Course format
 export function transformApiCourse(apiCourse: ApiCourse): Course {
@@ -74,6 +79,21 @@ export async function fetchCourses(): Promise<Course[]> {
   }
 }
 
+export async function fetchCourseDetails(courseId: number): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/courses/${courseId}/`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch course details:", error);
+    throw error;
+  }
+}
+
 export interface DropdownOption {
   value: string;
   label: string;
@@ -139,10 +159,11 @@ export async function login(username: string, password: string) {
   return res.json(); // { access, refresh }
 }
 
-export async function me(accessToken: string) {
+export async function me() {
   const res = await fetch(`${API_BASE_URL}/auth/me/`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: { ...authHeaders() },
   });
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`Me failed: ${res.status}`);
   return res.json();
 }
@@ -155,11 +176,105 @@ export async function fetchProgramLevels(): Promise<DropdownOption[]> {
 
 export interface ProgramOption extends DropdownOption { id: number; }
 
-export async function fetchPrograms(level?: string): Promise<ProgramOption[]> {
+export async function fetchPrograms(level?: string, search?: string): Promise<ProgramOption[]> {
   const url = new URL(`${API_BASE_URL}/programs/`);
   if (level) url.searchParams.set("level", level);
+  if (search) url.searchParams.set("search", search);
   const res = await fetch(url.toString());
   if (!res.ok) throw new Error(`Programs failed: ${res.status}`);
   const data = await res.json();
   return data.map((p: any) => ({ id: p.id, value: String(p.id), label: `${p.name} (${p.level_label})` }));
+}
+
+// ===== Planned courses =====
+export interface PlannedCourseDTO {
+  id: number;
+  course: ApiCourse;
+  semester: number;
+}
+
+export async function fetchPlannedCourses(): Promise<PlannedCourseDTO[]> {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/`, {
+    headers: { ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Fetch planned courses failed: ${res.status}`);
+  return res.json();
+}
+
+export async function addOrUpdatePlannedCourse(courseId: number, semester: number) {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ course_id: courseId, semester }),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Add/update planned course failed: ${res.status}`);
+  return res.json();
+}
+
+export async function updatePlannedCourseSemester(courseId: number, semester: number) {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ course_id: courseId, semester }),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Update planned course failed: ${res.status}`);
+  return res.json();
+}
+
+export async function deletePlannedCourse(courseId: number) {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ course_id: courseId }),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok && res.status !== 204) throw new Error(`Delete planned course failed: ${res.status}`);
+}
+
+// ===== Course Reviews =====
+export interface CourseReview {
+  id: number;
+  review: number;
+  description?: string;
+  created_at: string;
+  user: string;
+}
+
+export async function fetchCourseReviews(courseId: number): Promise<CourseReview[]> {
+  const res = await fetch(`${API_BASE_URL}/courses/${courseId}/reviews/`, {
+    headers: { ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Fetch course reviews failed: ${res.status}`);
+  return res.json();
+}
+
+export async function submitCourseReview(courseId: number, review: number, description?: string) {
+  const res = await fetch(`${API_BASE_URL}/courses/${courseId}/reviews/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ review, description }),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Submit review failed: ${res.status}`);
+  return res.json();
+}
+
+// ===== Profile Management =====
+export async function updateProfile(profileData: {
+  program_level?: string;
+  program?: string;
+  year_intake?: string;
+}) {
+  const res = await fetch(`${API_BASE_URL}/auth/profile/`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify(profileData),
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Update profile failed: ${res.status}`);
+  return res.json();
 }

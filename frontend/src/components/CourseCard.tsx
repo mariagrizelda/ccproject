@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus, BookOpen, Award, Calendar } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,62 +22,70 @@ const CourseCard = ({ course, onAdd, isAdded }: CourseCardProps) => {
     "400": "bg-orange-500/10 text-orange-700 dark:text-orange-400",
   };
 
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onAdd(course);
+  };
+
   return (
-    <Card className="group hover:shadow-[var(--shadow-hover)] transition-[box-shadow] duration-300 border-border bg-card">
-      <CardHeader>
-        <div className="flex items-start justify-between mb-2">
-          <Badge variant="secondary" className="font-mono">{course.code}</Badge>
-          <Badge className={levelColor[String(course.level)] ?? ""}>Level {course.level}</Badge>
-        </div>
-        <CardTitle className="text-xl group-hover:text-primary transition-colors">
-          {course.name}
-        </CardTitle>
-        <CardDescription className="line-clamp-2">{course.description}</CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <BookOpen className="h-4 w-4" />
-          <span>{getArea(course)}</span>
-        </div>
-        
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Award className="h-4 w-4" />
-          <span>{course.credits} Credits • {getAssessment(course)}</span>
-        </div>
-        
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span>{getSemesters(course).join(", ")}</span>
-        </div>
-
-        {course.prerequisites && course.prerequisites.length > 0 && (
-          <div className="pt-2 border-t border-border">
-            <p className="text-xs text-muted-foreground">
-              Prerequisites: {course.prerequisites.join(", ")}
-            </p>
+    <Link href={`/course/${course.id}`}>
+      <Card className="group hover:shadow-[var(--shadow-hover)] transition-[box-shadow] duration-300 border-border bg-card cursor-pointer">
+        <CardHeader>
+          <div className="flex items-start justify-between mb-2">
+            <Badge variant="secondary" className="font-mono">{course.code}</Badge>
+            <Badge className={levelColor[String(course.level)] ?? ""}>Level {course.level}</Badge>
           </div>
-        )}
-      </CardContent>
+          <CardTitle className="text-xl group-hover:text-primary transition-colors">
+            {course.name}
+          </CardTitle>
+          <CardDescription className="line-clamp-2">{course.description}</CardDescription>
+        </CardHeader>
+        
+        <CardContent className="space-y-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <BookOpen className="h-4 w-4" />
+            <span>{getArea(course)}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Award className="h-4 w-4" />
+            <span>{course.credits} Credits • {getAssessment(course)}</span>
+          </div>
+          
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>{getSemesters(course).join(", ")}</span>
+          </div>
 
-      <CardFooter>
-        <Button 
-          onClick={() => onAdd(course)}
-          disabled={isAdded}
-          className="w-full"
-          variant={isAdded ? "secondary" : "default"}
-        >
-          {isAdded ? (
-            "Added to Planner"
-          ) : (
-            <>
-              <Plus className="h-4 w-4 mr-2" />
-              Add to Planner
-            </>
+          {course.prerequisites && course.prerequisites.length > 0 && (
+            <div className="pt-2 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                Prerequisites: {course.prerequisites.join(", ")}
+              </p>
+            </div>
           )}
-        </Button>
-      </CardFooter>
-    </Card>
+        </CardContent>
+
+        <CardFooter>
+          <Button 
+            onClick={handleAddClick}
+            disabled={isAdded}
+            className="w-full"
+            variant={isAdded ? "secondary" : "default"}
+          >
+            {isAdded ? (
+              "Added to Planner"
+            ) : (
+              <>
+                <Plus className="h-4 w-4 mr-2" />
+                Add to Planner
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 };
 

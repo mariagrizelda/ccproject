@@ -56,9 +56,9 @@ class Assessment(models.Model):
     course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="assessments"
     )
-    category = models.CharField(max_length=100)
+    category = models.CharField(max_length=255)
     task = models.CharField(max_length=255)
-    mode = models.CharField(max_length=100)
+    mode = models.CharField(max_length=255)
     grading_type = models.CharField(
         max_length=20, choices=GradingType.choices, default=GradingType.PERCENTAGE
     )

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Course, Profile, Program
+from .models import Course, Profile, Program, PlannedCourse, CourseReview
 
 class CourseSerializer(serializers.ModelSerializer):
     class Meta:
@@ -56,3 +56,23 @@ class ProgramSerializer(serializers.ModelSerializer):
     class Meta:
         model = Program
         fields = ["id", "name", "level", "level_label"]
+
+
+class PlannedCourseSerializer(serializers.ModelSerializer):
+    course = CourseSerializer(read_only=True)
+    course_id = serializers.PrimaryKeyRelatedField(
+        queryset=Course.objects.all(), source="course", write_only=True
+    )
+
+    class Meta:
+        model = PlannedCourse
+        fields = ["id", "course", "course_id", "semester"]
+
+
+class CourseReviewSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+    
+    class Meta:
+        model = CourseReview
+        fields = ["id", "review", "description", "created_at", "user"]
+        read_only_fields = ["user", "created_at"]

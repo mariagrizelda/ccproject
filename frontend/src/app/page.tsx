@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { GraduationCap, BookOpen, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { GraduationCap, BookOpen, Loader2, User, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import SearchBar from "@/components/SearchBar";
 import CourseFilters from "@/components/CourseFilters";
 import CourseCard from "@/components/CourseCard";
 import DegreePlanner from "@/components/DegreePlanner";
-import { fetchCourses, getSemesters, getArea, getAssessment } from "@/lib/api";
+import { fetchCourses, getSemesters, getArea, getAssessment, fetchPlannedCourses, addOrUpdatePlannedCourse, updatePlannedCourseSemester, deletePlannedCourse, transformApiCourse } from "@/lib/api";
 import { Course, PlannedCourse } from "@/types/course";
 import { useToast } from "@/hooks/use-toast";
 
@@ -25,6 +27,17 @@ const Index = () => {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    globalThis.location.href = "/auth/login";
+    toast({
+      title: "Logged out",
+      description: "You have been successfully logged out.",
+    });
+  };
+
   const [availableSemesters, setAvailableSemesters] = useState<string[]>([
     "Semester 1",
     "Semester 2",
@@ -32,14 +45,27 @@ const Index = () => {
     "Semester 4",
   ]);
 
-  // Fetch courses on component mount
+  // Fetch courses and user planned courses on mount
   useEffect(() => {
-    const loadCourses = async () => {
+    const load = async () => {
       try {
         setLoading(true);
         setError(null);
         const fetchedCourses = await fetchCourses();
         setCourses(fetchedCourses);
+        const token = typeof globalThis !== "undefined" && (globalThis as any).localStorage ? localStorage.getItem("accessToken") : null;
+        if (token) {
+          try {
+            const pcs = await fetchPlannedCourses();
+            const transformed = pcs.map((pc) => {
+              const course = transformApiCourse(pc.course as any);
+              return { ...course, plannedSemester: `Semester ${pc.semester}` } as PlannedCourse;
+            });
+            setPlannedCourses(transformed);
+          } catch {
+            // ignore if unauthorized
+          }
+        }
       } catch (err) {
         setError("Failed to load courses. Please try again later.");
         console.error("Error fetching courses:", err);
@@ -47,8 +73,7 @@ const Index = () => {
         setLoading(false);
       }
     };
-
-    loadCourses();
+    load();
   }, []);
 
   const filteredCourses = courses.filter((course) => {
@@ -85,21 +110,19 @@ const Index = () => {
     setActiveTab("planner");
   };
 
-  const handleConfirmAddCourse = (semester: string) => {
+  const handleConfirmAddCourse = async (semester: string) => {
     if (!pendingCourse) return;
-
-    const plannedCourse: PlannedCourse = {
-      ...pendingCourse,
-      plannedSemester: semester,
-    };
-
-    setPlannedCourses([...plannedCourses, plannedCourse]);
-    setPendingCourse(null);
-    
-    toast({
-      title: "Course added!",
-      description: `${pendingCourse.code} - ${pendingCourse.name} has been added to ${semester}.`,
-    });
+    try {
+      const match = /\d+/.exec(semester);
+      const semNum = Number(match ? match[0] : 1);
+      await addOrUpdatePlannedCourse(pendingCourse.id, semNum);
+      const plannedCourse: PlannedCourse = { ...pendingCourse, plannedSemester: semester };
+      setPlannedCourses([...plannedCourses, plannedCourse]);
+      setPendingCourse(null);
+      toast({ title: "Course added!", description: `${pendingCourse.code} - ${pendingCourse.name} has been added to ${semester}.` });
+    } catch {
+      toast({ title: "You must be logged in", description: "Please log in to save your planner.", variant: "destructive" });
+    }
   };
 
   const handleCancelAddCourse = () => {
@@ -111,21 +134,17 @@ const Index = () => {
     setAvailableSemesters([...availableSemesters, `Semester ${nextSemesterNumber}`]);
   };
 
-  const handleRemoveCourse = (courseId: number) => {
+  const handleRemoveCourse = async (courseId: number) => {
+    try { await deletePlannedCourse(courseId); } catch {}
     setPlannedCourses(plannedCourses.filter((c) => c.id !== courseId));
-    
-    toast({
-      title: "Course removed",
-      description: "The course has been removed from your planner.",
-    });
+    toast({ title: "Course removed", description: "The course has been removed from your planner." });
   };
 
-  const handleUpdateSemester = (courseId: number, semester: string) => {
-    setPlannedCourses(
-      plannedCourses.map((c) =>
-        c.id === courseId ? { ...c, plannedSemester: semester } : c
-      )
-    );
+  const handleUpdateSemester = async (courseId: number, semester: string) => {
+    const match = /\d+/.exec(semester);
+    const semNum = Number(match ? match[0] : 1);
+    try { await updatePlannedCourseSemester(courseId, semNum); } catch {}
+    setPlannedCourses(plannedCourses.map((c) => c.id === courseId ? { ...c, plannedSemester: semester } : c));
   };
 
   const handleClearFilters = () => {
@@ -140,9 +159,23 @@ const Index = () => {
       {/* Hero Header */}
       <header className="bg-gradient-to-r from-primary to-accent text-primary-foreground py-12 px-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
-            <GraduationCap className="h-12 w-12" />
-            <h1 className="text-4xl md:text-5xl font-bold">UQ Courses</h1>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-4">
+              <GraduationCap className="h-12 w-12" />
+              <h1 className="text-4xl md:text-5xl font-bold">UQ Courses</h1>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href="/profile">
+                <Button variant="secondary" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+              </Link>
+              <Button variant="secondary" size="sm" onClick={handleLogout}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
           <p className="text-lg text-primary-foreground/90 max-w-2xl">
             Plan your academic journey with ease. Search, filter, and organize your courses by semester.
@@ -202,7 +235,7 @@ const Index = () => {
                 <div className="text-center py-12">
                   <p className="text-lg text-destructive mb-4">{error}</p>
                   <button 
-                    onClick={() => window.location.reload()} 
+                    onClick={() => globalThis.location.reload()} 
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
                   >
                     Try Again

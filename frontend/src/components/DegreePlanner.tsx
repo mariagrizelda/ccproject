@@ -86,7 +86,7 @@ const DegreePlanner = ({
                 <div>
                   <h4 className="font-semibold">{pendingCourse.name}</h4>
                   <p className="text-sm text-muted-foreground">
-                    {pendingCourse.credits} credits • {pendingCourse.area}
+                    {pendingCourse.credits} credits • {pendingCourse.study_area}
                   </p>
                 </div>
               </div>
@@ -167,7 +167,7 @@ const DegreePlanner = ({
                               <h4 className="font-semibold">{course.name}</h4>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {course.credits} credits • {course.area}
+                              {course.credits} credits • {course.study_area}
                             </p>
                           </div>
                           
