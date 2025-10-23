@@ -40,7 +40,7 @@ spec:
     spec:
       initContainers:
       - name: wait-for-mysql
-        image: busybox:1.35
+        image: busybox:1.28
         command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: auth-svc
@@ -105,17 +105,18 @@ spec:
           httpGet:
             path: /api/auth/health/
             port: 8001
-          initialDelaySeconds: 60
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          initialDelaySeconds: 90
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 5
         readinessProbe:
           httpGet:
             path: /api/auth/health/
             port: 8001
-          initialDelaySeconds: 30
-          periodSeconds: 5
-          timeoutSeconds: 3
+          initialDelaySeconds: 60
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
         resources:
           requests:
             memory: "256Mi"
