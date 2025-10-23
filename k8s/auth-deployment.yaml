@@ -107,21 +107,19 @@ spec:
               python manage.py migrate --noinput &&
               gunicorn backend.wsgi:application --bind 0.0.0.0:8001 --workers 3 --timeout 120
           livenessProbe:
-             httpGet:
-               path: /api/auth/health/
-               port: 8001
-             initialDelaySeconds: 30
-             periodSeconds: 10
-             timeoutSeconds: 5
-             failureThreshold: 3
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
-             httpGet:
-               path: /api/auth/health/
-               port: 8001
-             initialDelaySeconds: 10
-             periodSeconds: 5
-             timeoutSeconds: 3
-             failureThreshold: 3
+            tcpSocket:
+              port: 8001
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               memory: "256Mi"

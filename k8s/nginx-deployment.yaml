@@ -10,9 +10,30 @@ data:
     }
 
     http {
-        # Use Kubernetes DNS for dynamic service resolution
+        # Use Kubernetes DNS resolver
         resolver kube-dns.kube-system.svc.cluster.local valid=10s;
         resolver_timeout 5s;
+
+        # Upstream definitions for better service discovery
+        upstream auth_backend {
+            server auth-service.ccproject.svc.cluster.local:8001;
+        }
+
+        upstream courses_backend {
+            server courses-service.ccproject.svc.cluster.local:8002;
+        }
+
+        upstream catalog_backend {
+            server catalog-service.ccproject.svc.cluster.local:8003;
+        }
+
+        upstream planner_backend {
+            server planner-service.ccproject.svc.cluster.local:8004;
+        }
+
+        upstream frontend_backend {
+            server frontend-service.ccproject.svc.cluster.local:3000;
+        }
 
         server {
             listen 80;
@@ -32,8 +53,7 @@ data:
 
             # Auth microservice routes
             location /api/auth/ {
-                set $auth_backend "auth-service.ccproject.svc.cluster.local:8001";
-                proxy_pass http://$auth_backend/api/auth/;
+                proxy_pass http://auth_backend/api/auth/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -42,8 +62,7 @@ data:
 
             # Courses microservice routes
             location /api/courses/ {
-                set $courses_backend "courses-service.ccproject.svc.cluster.local:8002";
-                proxy_pass http://$courses_backend/api/courses/;
+                proxy_pass http://courses_backend/api/courses/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -52,8 +71,7 @@ data:
 
             # Catalog microservice routes
             location /api/catalog/ {
-                set $catalog_backend "catalog-service.ccproject.svc.cluster.local:8003";
-                proxy_pass http://$catalog_backend/api/catalog/;
+                proxy_pass http://catalog_backend/api/catalog/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -62,8 +80,7 @@ data:
 
             # Planner microservice routes
             location /api/planned-courses/ {
-                set $planner_backend "planner-service.ccproject.svc.cluster.local:8004";
-                proxy_pass http://$planner_backend/api/planned-courses/;
+                proxy_pass http://planner_backend/api/planned-courses/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -72,8 +89,7 @@ data:
 
             # Frontend routes
             location / {
-                set $frontend_backend "frontend-service.ccproject.svc.cluster.local:3000";
-                proxy_pass http://$frontend_backend;
+                proxy_pass http://frontend_backend;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -128,34 +144,34 @@ spec:
         version: v1
     spec:
       containers:
-      - name: nginx
-        image: nginx:alpine
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: nginx-config
-          mountPath: /etc/nginx/nginx.conf
-          subPath: nginx.conf
-        livenessProbe:
-          httpGet:
-            path: /nginx-health
-            port: 80
-          initialDelaySeconds: 10
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /nginx-health
-            port: 80
-          initialDelaySeconds: 5
-          periodSeconds: 5
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          livenessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /nginx-health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
       volumes:
-      - name: nginx-config
-        configMap:
-          name: nginx-config
+        - name: nginx-config
+          configMap:
+            name: nginx-config

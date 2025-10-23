@@ -1,6 +1,6 @@
 import { ApiCourse, Course, AssessmentType, AreaOfStudy, Semester } from "@/types/course";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_BASE_URL = '/api';
 
 function authHeaders() {
   const token = typeof globalThis !== "undefined" && (globalThis as any).localStorage ? localStorage.getItem("accessToken") : null;

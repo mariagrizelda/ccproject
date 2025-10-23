@@ -116,20 +116,19 @@ spec:
               python manage.py scrape_programs --force &&
               gunicorn backend.wsgi:application --bind 0.0.0.0:8003 --workers 3 --timeout 120
           livenessProbe:
-             httpGet:
-               path: /api/catalog/health/
-               port: 8003
-             initialDelaySeconds: 30
-             periodSeconds: 10
-             timeoutSeconds: 5
-             failureThreshold: 3
+            tcpSocket:
+              port: 8003
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
-             httpGet:
-               path: /api/catalog/health/
-               port: 8003
-             initialDelaySeconds: 10
-             periodSeconds: 5
-             timeoutSeconds: 3
+            tcpSocket:
+              port: 8003
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
           resources:
             requests:
               memory: "256Mi"
