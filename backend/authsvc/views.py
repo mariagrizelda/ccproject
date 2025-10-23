@@ -2,10 +2,13 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from authsvc.models import Profile
 from .serializers import RegisterSerializer, ProfileSerializer
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class HealthCheck(APIView):
     permission_classes = [permissions.AllowAny]
     

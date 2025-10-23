@@ -1,10 +1,13 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from catalogsrv.models import Program
 from .serializers import ProgramSerializer
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class HealthCheck(APIView):
     permission_classes = [permissions.AllowAny]
     

@@ -39,91 +39,101 @@ spec:
         version: v1
     spec:
       initContainers:
-      - name: wait-for-mysql
-        image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
-      - name: wait-for-auth
-        image: busybox:1.35
-        command: ['sh', '-c', 'until nc -z auth-service 8001; do echo waiting for auth; sleep 2; done;']
+        - name: wait-for-mysql
+          image: busybox:1.35
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;",
+            ]
+        - name: wait-for-auth
+          image: busybox:1.35
+          command:
+            [
+              "sh",
+              "-c",
+              "until nc -z auth-service 8001; do echo waiting for auth; sleep 2; done;",
+            ]
       containers:
-      - name: catalog-svc
-        image: gcr.io/model-obelisk-469607-r0/ccproject-backend:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 8003
-        env:
-        - name: DEBUG
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: DEBUG
-        - name: SECRET_KEY
-          valueFrom:
-            secretKeyRef:
-              name: ccproject-secrets
-              key: SECRET_KEY
-        - name: DB_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: DB_HOST
-        - name: DB_PORT
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: DB_PORT
-        - name: DB_NAME
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: DB_NAME
-        - name: DB_USER
-          valueFrom:
-            secretKeyRef:
-              name: ccproject-secrets
-              key: DB_USER
-        - name: DB_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: ccproject-secrets
-              key: DB_PASSWORD
-        - name: ALLOWED_HOSTS
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: ALLOWED_HOSTS
-        - name: CORS_ALLOWED_ORIGINS
-          valueFrom:
-            configMapKeyRef:
-              name: ccproject-config
-              key: CORS_ALLOWED_ORIGINS
-        - name: DJANGO_SETTINGS_MODULE
-          value: "backend.settings_catalog"
-        command: ["/bin/sh", "-c"]
-        args:
-          - |
-            python manage.py migrate --noinput &&
-            python manage.py scrape_programs --force &&
-            gunicorn backend.wsgi:application --bind 0.0.0.0:8003 --workers 3 --timeout 120
-        livenessProbe:
-          httpGet:
-            path: /api/catalog/health/
-            port: 8003
-          initialDelaySeconds: 90
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /api/catalog/health/
-            port: 8003
-          initialDelaySeconds: 60
-          periodSeconds: 5
-          timeoutSeconds: 3
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
+        - name: catalog-svc
+          image: gcr.io/model-obelisk-469607-r0/ccproject-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8003
+          env:
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: DEBUG
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ccproject-secrets
+                  key: SECRET_KEY
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: DB_NAME
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: ccproject-secrets
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ccproject-secrets
+                  key: DB_PASSWORD
+            - name: ALLOWED_HOSTS
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: ALLOWED_HOSTS
+            - name: CORS_ALLOWED_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: ccproject-config
+                  key: CORS_ALLOWED_ORIGINS
+            - name: DJANGO_SETTINGS_MODULE
+              value: "backend.settings_catalog"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              python manage.py migrate --noinput &&
+              python manage.py scrape_programs --force &&
+              gunicorn backend.wsgi:application --bind 0.0.0.0:8003 --workers 3 --timeout 120
+          livenessProbe:
+             httpGet:
+               path: /api/catalog/health/
+               port: 8003
+             initialDelaySeconds: 30
+             periodSeconds: 10
+             timeoutSeconds: 5
+             failureThreshold: 3
+          readinessProbe:
+             httpGet:
+               path: /api/catalog/health/
+               port: 8003
+             initialDelaySeconds: 10
+             periodSeconds: 5
+             timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "200m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
