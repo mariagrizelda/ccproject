@@ -8,5 +8,5 @@ data:
   DB_HOST: "mysql-service"
   DB_PORT: "3306"
   DB_NAME: "ccproject"
-  ALLOWED_HOSTS: "localhost,127.0.0.1,frontend,backend,auth-service,courses-service,catalog-service,planner-service"
-  CORS_ALLOWED_ORIGINS: "http://localhost,http://127.0.0.1"
+  ALLOWED_HOSTS: "localhost,127.0.0.1,frontend,backend,auth-service,courses-service,catalog-service,planner-service,34.129.147.19,nginx-service"
+  CORS_ALLOWED_ORIGINS: "http://localhost,http://127.0.0.1,http://34.129.147.19"
