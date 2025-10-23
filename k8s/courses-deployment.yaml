@@ -47,7 +47,7 @@ spec:
         command: ['sh', '-c', 'until nc -z auth-service 8001; do echo waiting for auth; sleep 2; done;']
       containers:
       - name: courses-svc
-        image: gcr.io/YOUR_PROJECT_ID/ccproject-backend:latest
+        image: gcr.io/model-obelisk-469607-r0/ccproject-backend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8002

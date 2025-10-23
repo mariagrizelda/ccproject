@@ -44,7 +44,7 @@ spec:
         command: ['sh', '-c', 'until nc -z mysql-service 3306; do echo waiting for mysql; sleep 2; done;']
       containers:
       - name: auth-svc
-        image: gcr.io/YOUR_PROJECT_ID/ccproject-backend:latest
+        image: gcr.io/model-obelisk-469607-r0/ccproject-backend:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8001
