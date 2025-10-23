@@ -51,10 +51,10 @@ const Index = () => {
         const token = typeof globalThis !== "undefined" && (globalThis as any).localStorage ? localStorage.getItem("accessToken") : null;
         if (token) {
           try {
-            // Fetch semesters
+            // Fetch semesters (backend will auto-create 1-4 if none exist)
             const semestersData = await fetchSemesters();
             const semesterStrings = semestersData.map(s => `Semester ${s.semester_number}`);
-            setAvailableSemesters(semesterStrings.length > 0 ? semesterStrings : ["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
+            setAvailableSemesters(semesterStrings);
             
             // Fetch planned courses
             const pcs = await fetchPlannedCourses();
@@ -75,8 +75,9 @@ const Index = () => {
               })
             );
             setPlannedCourses(transformed.filter(Boolean));
-          } catch {
-            // If no semesters exist, create default ones
+          } catch (err) {
+            console.error("Error loading planner data:", err);
+            // Show default semesters if error
             setAvailableSemesters(["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
           }
         } else {

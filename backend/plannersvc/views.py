@@ -19,17 +19,30 @@ class SemestersView(APIView):
     def get(self, request):
         """Get all semesters for the user"""
         semesters = Semester.objects.filter(user=request.user)
+        
+        # If no semesters exist, create default ones (1-4)
+        if not semesters.exists():
+            for i in range(1, 5):
+                Semester.objects.create(user=request.user, semester_number=i)
+            semesters = Semester.objects.filter(user=request.user)
+        
         data = SemesterSerializer(semesters, many=True).data
         return Response(data)
 
     def post(self, request):
         """Add a new semester"""
-        # Get the highest semester number for this user
-        max_semester = Semester.objects.filter(user=request.user).aggregate(
+        # Get the highest semester number from both Semester model and PlannedCourse
+        max_semester_from_model = Semester.objects.filter(user=request.user).aggregate(
             max_num=models.Max('semester_number')
         )['max_num']
         
-        next_semester_number = (max_semester or 0) + 1
+        max_semester_from_courses = PlannedCourse.objects.filter(user=request.user).aggregate(
+            max_num=models.Max('semester')
+        )['max_num']
+        
+        # Use the higher of the two
+        max_semester = max(max_semester_from_model or 0, max_semester_from_courses or 0)
+        next_semester_number = max_semester + 1
         
         semester = Semester.objects.create(
             user=request.user,
