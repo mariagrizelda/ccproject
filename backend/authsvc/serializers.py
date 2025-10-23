@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from shared.models import Profile
+from authsvc.models import Profile
 
 
 class ProfileSerializer(serializers.ModelSerializer):

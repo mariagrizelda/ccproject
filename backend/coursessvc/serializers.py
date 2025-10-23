@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from shared.models import Course, CourseReview
+from coursessvc.models import Course, CourseReview
 
 
 class CourseSerializer(serializers.ModelSerializer):

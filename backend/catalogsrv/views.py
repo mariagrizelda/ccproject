@@ -1,7 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
-from shared.models import Course, Program
+from catalogsrv.models import Program
 from .serializers import ProgramSerializer
 
 
@@ -13,21 +13,27 @@ class HealthCheck(APIView):
 
 
 class AssessmentTypes(APIView):
+    """Return hardcoded assessment types (moved from Course model choices)"""
     def get(self, request):
-        """Get all available assessment types from the model choices"""
         assessment_types = [
-            {"value": choice[0], "label": choice[1]} 
-            for choice in Course.AssessmentType.choices
+            {"value": "EXAM", "label": "Exam"},
+            {"value": "PROJECT", "label": "Project"},
+            {"value": "ASSIGNMENT", "label": "Assignment"},
+            {"value": "MIX", "label": "Mix"},
         ]
         return Response(assessment_types)
 
 
 class StudyAreas(APIView):
+    """Return hardcoded study areas (moved from Course model choices)"""
     def get(self, request):
-        """Get all available study areas from the model choices"""
         study_areas = [
-            {"value": choice[0], "label": choice[1]} 
-            for choice in Course.StudyArea.choices
+            {"value": "BEL", "label": "Business, Economics & Law"},
+            {"value": "EAIT", "label": "Engineering, Architecture & Information Technology"},
+            {"value": "HABS", "label": "Health & Behavioural Sciences"},
+            {"value": "HMB", "label": "Health, Medicine and Behavioural Sciences"},
+            {"value": "HASS", "label": "Humanities, Arts & Social Sciences"},
+            {"value": "SCI", "label": "Science"},
         ]
         return Response(study_areas)
 

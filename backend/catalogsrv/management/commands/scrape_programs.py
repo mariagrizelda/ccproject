@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from shared.models import Program
+from catalogsrv.models import Program
 import requests
 from bs4 import BeautifulSoup
 import time

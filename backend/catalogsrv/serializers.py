@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from shared.models import Program
+from catalogsrv.models import Program
 
 
 class ProgramSerializer(serializers.ModelSerializer):

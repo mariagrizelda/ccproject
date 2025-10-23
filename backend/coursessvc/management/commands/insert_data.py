@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from shared.models import Course, CoursePrerequisite, Assessment
+from coursessvc.models import Course, CoursePrerequisite, Assessment
 
 
 class Command(BaseCommand):
@@ -85,3 +85,5 @@ Students will have one-on-one meetings with their supervisor to discuss their wo
             hurdle=True,
             hurdle_description="""This submission has both a team component, as well as a short individual self reflection. Students must achieve a Pass on both items to be eligible to Pass the course. Individual student contribution to the team component is determined by the logs in the source code repository."""
         )
+
+        self.stdout.write(self.style.SUCCESS('Successfully inserted course data'))

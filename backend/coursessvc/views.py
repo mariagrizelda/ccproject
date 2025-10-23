@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
 from django.db import models
-from shared.models import Course, CourseReview
+from coursessvc.models import Course, CourseReview
 from .serializers import CourseSerializer, CourseReviewSerializer
 
 

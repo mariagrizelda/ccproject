@@ -1,19 +1,9 @@
 from rest_framework import serializers
-from shared.models import Course, PlannedCourse
-
-
-class CourseSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Course
-        fields = "__all__"
+from plannersvc.models import PlannedCourse
 
 
 class PlannedCourseSerializer(serializers.ModelSerializer):
-    course = CourseSerializer(read_only=True)
-    course_id = serializers.PrimaryKeyRelatedField(
-        queryset=Course.objects.all(), source="course", write_only=True
-    )
-
+    # No course FK relation - just store IDs and denormalized data
     class Meta:
         model = PlannedCourse
-        fields = ["id", "course", "course_id", "semester"]
+        fields = ["id", "course_id", "course_code", "course_name", "semester"]
