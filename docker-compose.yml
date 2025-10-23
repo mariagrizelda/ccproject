@@ -46,7 +46,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8001/api/auth/health/"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     command: >
       sh -c "
         python manage.py migrate &&
@@ -81,7 +82,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8002/api/courses/health/"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 40s
     command: >
       sh -c "
         python manage.py migrate &&
@@ -117,7 +119,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8003/api/catalog/health/"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 60s
     command: >
       sh -c "
         python manage.py migrate &&
@@ -153,7 +156,8 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8004/api/planned-courses/health/"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
     command: >
       sh -c "
         python manage.py migrate &&
