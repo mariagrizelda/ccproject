@@ -1,62 +1,86 @@
 #!/bin/bash
 
 echo "========================================="
-echo "Updating Kubernetes Configuration"
+echo "Kubernetes Configuration Update"
+echo "========================================="
+echo "This will:"
+echo "  1. Update ConfigMap with new LoadBalancer IP"
+echo "  2. Update NGINX config with dynamic DNS resolution"
+echo "  3. Update Frontend with new LoadBalancer IP"
+echo "  4. Delete ALL pods to force config reload"
+echo ""
+read -p "Continue? (y/n) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]
+then
+    exit 1
+fi
+
+echo ""
+echo "========================================="
+echo "Step 1: Applying Updated Configurations"
 echo "========================================="
 
-# Update ConfigMap with new LoadBalancer IP and relaxed ALLOWED_HOSTS
 echo "✅ Applying updated ConfigMap..."
 kubectl apply -f k8s/configmap.yaml
 
-# Update NGINX with health endpoint
-echo "✅ Applying updated NGINX configuration..."
+echo "✅ Applying updated NGINX configuration (with dynamic DNS)..."
 kubectl apply -f k8s/nginx-deployment.yaml
 
-# Update Frontend with new LoadBalancer IP
 echo "✅ Applying updated Frontend configuration..."
 kubectl apply -f k8s/frontend-deployment.yaml
 
-# Restart all deployments to pick up new config
 echo ""
 echo "========================================="
-echo "Restarting Deployments"
+echo "Step 2: Force Restarting All Pods"
 echo "========================================="
+echo "Deleting pods to pick up new ConfigMap values..."
+echo ""
 
-echo "🔄 Restarting auth-svc..."
-kubectl rollout restart deployment/auth-svc -n ccproject
+echo "🔄 Deleting NGINX pods..."
+kubectl delete pods -n ccproject -l app=nginx
 
-echo "🔄 Restarting courses-svc..."
-kubectl rollout restart deployment/courses-svc -n ccproject
+echo "🔄 Deleting Auth service pods..."
+kubectl delete pods -n ccproject -l app=auth-svc
 
-echo "🔄 Restarting catalog-svc..."
-kubectl rollout restart deployment/catalog-svc -n ccproject
+echo "🔄 Deleting Courses service pods..."
+kubectl delete pods -n ccproject -l app=courses-svc
 
-echo "🔄 Restarting planner-svc..."
-kubectl rollout restart deployment/planner-svc -n ccproject
+echo "🔄 Deleting Catalog service pods..."
+kubectl delete pods -n ccproject -l app=catalog-svc
 
-echo "🔄 Restarting frontend..."
-kubectl rollout restart deployment/frontend -n ccproject
+echo "🔄 Deleting Planner service pods..."
+kubectl delete pods -n ccproject -l app=planner-svc
 
-echo "🔄 Restarting nginx..."
-kubectl rollout restart deployment/nginx -n ccproject
+echo "🔄 Deleting Frontend pods..."
+kubectl delete pods -n ccproject -l app=frontend
+
+echo ""
+echo "⏳ Waiting 15 seconds for pods to terminate and recreate..."
+sleep 15
 
 echo ""
 echo "========================================="
-echo "Waiting for deployments to stabilize..."
+echo "Current Pod Status:"
 echo "========================================="
-
-sleep 10
-
-echo ""
 kubectl get pods -n ccproject
 
 echo ""
 echo "========================================="
-echo "✅ Configuration updated and deployments restarted!"
+echo "✅ Configuration Updated Successfully!"
+echo "========================================="
 echo ""
-echo "Monitor the rollout with:"
+echo "📊 Monitor pod status:"
 echo "  watch kubectl get pods -n ccproject"
 echo ""
-echo "Check status with:"
+echo "🔍 Check LoadBalancer IP:"
 echo "  kubectl get svc nginx-service -n ccproject"
-echo "========================================="
+echo ""
+echo "🧪 Test endpoints once all pods are Ready:"
+echo "  curl http://34.126.201.251/nginx-health"
+echo "  curl http://34.126.201.251/api/auth/health/"
+echo "  curl http://34.126.201.251/"
+echo ""
+echo "📋 Run diagnostics:"
+echo "  ./diagnose-k8s.sh"
+echo "========================================"

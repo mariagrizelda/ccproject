@@ -10,25 +10,9 @@ data:
     }
 
     http {
-        upstream auth_svc {
-            server auth-service:8001;
-        }
-
-        upstream courses_svc {
-            server courses-service:8002;
-        }
-
-        upstream catalog_svc {
-            server catalog-service:8003;
-        }
-
-        upstream planner_svc {
-            server planner-service:8004;
-        }
-
-        upstream frontend {
-            server frontend-service:3000;
-        }
+        # Use Kubernetes DNS for dynamic service resolution
+        resolver kube-dns.kube-system.svc.cluster.local valid=10s;
+        resolver_timeout 5s;
 
         server {
             listen 80;
@@ -48,7 +32,8 @@ data:
 
             # Auth microservice routes
             location /api/auth/ {
-                proxy_pass http://auth_svc/api/auth/;
+                set $auth_backend "auth-service.ccproject.svc.cluster.local:8001";
+                proxy_pass http://$auth_backend/api/auth/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -57,7 +42,8 @@ data:
 
             # Courses microservice routes
             location /api/courses/ {
-                proxy_pass http://courses_svc/api/courses/;
+                set $courses_backend "courses-service.ccproject.svc.cluster.local:8002";
+                proxy_pass http://$courses_backend/api/courses/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -66,7 +52,8 @@ data:
 
             # Catalog microservice routes
             location /api/catalog/ {
-                proxy_pass http://catalog_svc/api/catalog/;
+                set $catalog_backend "catalog-service.ccproject.svc.cluster.local:8003";
+                proxy_pass http://$catalog_backend/api/catalog/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -75,7 +62,8 @@ data:
 
             # Planner microservice routes
             location /api/planned-courses/ {
-                proxy_pass http://planner_svc/api/planned-courses/;
+                set $planner_backend "planner-service.ccproject.svc.cluster.local:8004";
+                proxy_pass http://$planner_backend/api/planned-courses/;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -84,7 +72,8 @@ data:
 
             # Frontend routes
             location / {
-                proxy_pass http://frontend/;
+                set $frontend_backend "frontend-service.ccproject.svc.cluster.local:3000";
+                proxy_pass http://$frontend_backend;
                 proxy_set_header Host $host;
                 proxy_set_header X-Real-IP $remote_addr;
                 proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
