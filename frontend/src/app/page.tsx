@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { GraduationCap, BookOpen, Loader2, User, LogOut } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ import { Course, PlannedCourse } from "@/types/course";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [assessmentFilter, setAssessmentFilter] = useState("all");
   const [levelFilter, setLevelFilter] = useState("all");
@@ -26,6 +28,17 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const handleUnauthorized = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    toast({
+      title: "Session expired",
+      description: "Please log in again to continue.",
+      variant: "destructive",
+    });
+    router.push("/auth/login");
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
@@ -75,10 +88,14 @@ const Index = () => {
               })
             );
             setPlannedCourses(transformed.filter(Boolean));
-          } catch (err) {
+          } catch (err: any) {
             console.error("Error loading planner data:", err);
-            // Show default semesters if error
-            setAvailableSemesters(["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
+            if (err.message === "unauthorized") {
+              handleUnauthorized();
+            } else {
+              // Show default semesters if error
+              setAvailableSemesters(["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
+            }
           }
         } else {
           // Not logged in, show default semesters
@@ -143,8 +160,12 @@ const Index = () => {
       setPlannedCourses([...plannedCourses, plannedCourse]);
       setPendingCourse(null);
       toast({ title: "Course added!", description: `${pendingCourse.code} - ${pendingCourse.name} has been added to ${semester}.` });
-    } catch {
-      toast({ title: "You must be logged in", description: "Please log in to save your planner.", variant: "destructive" });
+    } catch (err: any) {
+      if (err.message === "unauthorized") {
+        handleUnauthorized();
+      } else {
+        toast({ title: "Failed to add course", description: "Please try again.", variant: "destructive" });
+      }
     }
   };
 
@@ -157,12 +178,16 @@ const Index = () => {
       const newSemester = await addSemester();
       setAvailableSemesters([...availableSemesters, `Semester ${newSemester.semester_number}`]);
       toast({ title: "Semester added", description: `Semester ${newSemester.semester_number} has been added.` });
-    } catch (err) {
-      toast({ 
-        title: "Failed to add semester", 
-        description: "You must be logged in to manage semesters.", 
-        variant: "destructive" 
-      });
+    } catch (err: any) {
+      if (err.message === "unauthorized") {
+        handleUnauthorized();
+      } else {
+        toast({ 
+          title: "Failed to add semester", 
+          description: err.message || "An error occurred.", 
+          variant: "destructive" 
+        });
+      }
     }
   };
 
@@ -173,25 +198,41 @@ const Index = () => {
       setAvailableSemesters(availableSemesters.slice(0, -1));
       toast({ title: "Semester deleted", description: "The semester has been removed." });
     } catch (err: any) {
-      toast({ 
-        title: "Cannot delete semester", 
-        description: err.message || "Remove all courses from this semester first.", 
-        variant: "destructive" 
-      });
+      if (err.message === "unauthorized") {
+        handleUnauthorized();
+      } else {
+        toast({ 
+          title: "Cannot delete semester", 
+          description: err.message || "Remove all courses from this semester first.", 
+          variant: "destructive" 
+        });
+      }
     }
   };
 
   const handleRemoveCourse = async (courseId: number) => {
-    try { await deletePlannedCourse(courseId); } catch {}
-    setPlannedCourses(plannedCourses.filter((c) => c.id !== courseId));
-    toast({ title: "Course removed", description: "The course has been removed from your planner." });
+    try { 
+      await deletePlannedCourse(courseId); 
+      setPlannedCourses(plannedCourses.filter((c) => c.id !== courseId));
+      toast({ title: "Course removed", description: "The course has been removed from your planner." });
+    } catch (err: any) {
+      if (err.message === "unauthorized") {
+        handleUnauthorized();
+      }
+    }
   };
 
   const handleUpdateSemester = async (courseId: number, semester: string) => {
     const match = /\d+/.exec(semester);
     const semNum = Number(match ? match[0] : 1);
-    try { await updatePlannedCourseSemester(courseId, semNum); } catch {}
-    setPlannedCourses(plannedCourses.map((c) => c.id === courseId ? { ...c, plannedSemester: semester } : c));
+    try { 
+      await updatePlannedCourseSemester(courseId, semNum);
+      setPlannedCourses(plannedCourses.map((c) => c.id === courseId ? { ...c, plannedSemester: semester } : c));
+    } catch (err: any) {
+      if (err.message === "unauthorized") {
+        handleUnauthorized();
+      }
+    }
   };
 
   const handleClearFilters = () => {
