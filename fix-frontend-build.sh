@@ -22,3 +22,13 @@ echo "⏳ Waiting for rollout to complete..."
 kubectl rollout status deployment frontend -n ccproject
 
 echo "✅ Frontend deployment updated!"
+
+kubectl rollout restart deployment auth-svc -n ccproject
+kubectl rollout status deployment auth-svc -n ccproject
+kubectl rollout restart deployment planner-svc -n ccproject
+kubectl rollout status deployment planner-svc -n ccproject
+kubectl rollout restart deployment catalog-svc -n ccproject
+kubectl rollout status deployment catalog-svc -n ccproject
+kubectl rollout restart deployment courses-svc -n ccproject
+kubectl rollout status deployment courses-svc -n ccproject
+
