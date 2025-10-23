@@ -179,10 +179,12 @@ export async function fetchProgramLevels(): Promise<DropdownOption[]> {
 export interface ProgramOption extends DropdownOption { id: number; }
 
 export async function fetchPrograms(level?: string, search?: string): Promise<ProgramOption[]> {
-  const url = new URL(`${API_BASE_URL}/catalog/programs/`);
-  if (level) url.searchParams.set("level", level);
-  if (search) url.searchParams.set("search", search);
-  const res = await fetch(url.toString());
+  const params = new URLSearchParams();
+  if (level) params.set("level", level);
+  if (search) params.set("search", search);
+  const queryString = params.toString();
+  const url = `${API_BASE_URL}/catalog/programs/${queryString ? `?${queryString}` : ''}`;
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`Programs failed: ${res.status}`);
   const data = await res.json();
   return data.map((p: any) => ({ id: p.id, value: String(p.id), label: `${p.name} (${p.level_label})` }));
