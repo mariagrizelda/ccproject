@@ -101,7 +101,7 @@ export interface DropdownOption {
 
 export async function fetchAssessmentTypes(): Promise<DropdownOption[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/assessment-types/`);
+    const response = await fetch(`${API_BASE_URL}/catalog/assessment-types/`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -116,7 +116,7 @@ export async function fetchAssessmentTypes(): Promise<DropdownOption[]> {
 
 export async function fetchStudyAreas(): Promise<DropdownOption[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/study-areas/`);
+    const response = await fetch(`${API_BASE_URL}/catalog/study-areas/`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -169,7 +169,7 @@ export async function me() {
 }
 
 export async function fetchProgramLevels(): Promise<DropdownOption[]> {
-  const res = await fetch(`${API_BASE_URL}/program-levels/`);
+  const res = await fetch(`${API_BASE_URL}/catalog/program-levels/`);
   console.log(API_BASE_URL);
   if (!res.ok) throw new Error(`Program levels failed: ${res.status}`);
   console.log(res.json);
@@ -179,7 +179,7 @@ export async function fetchProgramLevels(): Promise<DropdownOption[]> {
 export interface ProgramOption extends DropdownOption { id: number; }
 
 export async function fetchPrograms(level?: string, search?: string): Promise<ProgramOption[]> {
-  const url = new URL(`${API_BASE_URL}/programs/`);
+  const url = new URL(`${API_BASE_URL}/catalog/programs/`);
   if (level) url.searchParams.set("level", level);
   if (search) url.searchParams.set("search", search);
   const res = await fetch(url.toString());
