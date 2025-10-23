@@ -2,6 +2,21 @@ from django.conf import settings
 from django.db import models
 
 
+class Semester(models.Model):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="semesters"
+    )
+    semester_number = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = [("user", "semester_number")]
+        ordering = ["semester_number"]
+
+    def __str__(self):
+        return f"Semester {self.semester_number}"
+
+
 class PlannedCourse(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="planned_courses"

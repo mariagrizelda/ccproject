@@ -30,6 +30,7 @@ interface DegreePlannerProps {
   onConfirmAdd: (semester: string) => void;
   onCancelAdd: () => void;
   onAddSemester: () => void;
+  onDeleteSemester: () => void;
 }
 
 const DegreePlanner = ({ 
@@ -40,7 +41,8 @@ const DegreePlanner = ({
   onUpdateSemester,
   onConfirmAdd,
   onCancelAdd,
-  onAddSemester
+  onAddSemester,
+  onDeleteSemester
 }: DegreePlannerProps) => {
   const [selectedSemester, setSelectedSemester] = useState<string>("");
 
@@ -207,11 +209,17 @@ const DegreePlanner = ({
           })}
           
           <Card className="border-dashed border-2">
-            <CardContent className="flex items-center justify-center py-8">
+            <CardContent className="flex items-center justify-center py-8 gap-4">
               <Button onClick={onAddSemester} variant="outline" className="gap-2">
                 <Plus className="h-4 w-4" />
                 Add Another Semester
               </Button>
+              {availableSemesters.length > 0 && (
+                <Button onClick={onDeleteSemester} variant="outline" className="gap-2 text-destructive hover:bg-destructive/10">
+                  <Trash2 className="h-4 w-4" />
+                  Delete Latest Semester
+                </Button>
+              )}
             </CardContent>
           </Card>
         </div>

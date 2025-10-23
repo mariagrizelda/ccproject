@@ -9,7 +9,7 @@ import SearchBar from "@/components/SearchBar";
 import CourseFilters from "@/components/CourseFilters";
 import CourseCard from "@/components/CourseCard";
 import DegreePlanner from "@/components/DegreePlanner";
-import { fetchCourses, getSemesters, getArea, getAssessment, fetchPlannedCourses, addOrUpdatePlannedCourse, updatePlannedCourseSemester, deletePlannedCourse } from "@/lib/api";
+import { fetchCourses, getSemesters, getArea, getAssessment, fetchPlannedCourses, addOrUpdatePlannedCourse, updatePlannedCourseSemester, deletePlannedCourse, fetchSemesters, addSemester, deleteSemester } from "@/lib/api";
 import { Course, PlannedCourse } from "@/types/course";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,12 +38,7 @@ const Index = () => {
     });
   };
 
-  const [availableSemesters, setAvailableSemesters] = useState<string[]>([
-    "Semester 1",
-    "Semester 2",
-    "Semester 3",
-    "Semester 4",
-  ]);
+  const [availableSemesters, setAvailableSemesters] = useState<string[]>([]);
 
   // Fetch courses and user planned courses on mount
   useEffect(() => {
@@ -56,6 +51,12 @@ const Index = () => {
         const token = typeof globalThis !== "undefined" && (globalThis as any).localStorage ? localStorage.getItem("accessToken") : null;
         if (token) {
           try {
+            // Fetch semesters
+            const semestersData = await fetchSemesters();
+            const semesterStrings = semestersData.map(s => `Semester ${s.semester_number}`);
+            setAvailableSemesters(semesterStrings.length > 0 ? semesterStrings : ["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
+            
+            // Fetch planned courses
             const pcs = await fetchPlannedCourses();
             const transformed = await Promise.all(
               pcs.map(async (pc) => {
@@ -75,8 +76,12 @@ const Index = () => {
             );
             setPlannedCourses(transformed.filter(Boolean));
           } catch {
-            // ignore if unauthorized
+            // If no semesters exist, create default ones
+            setAvailableSemesters(["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
           }
+        } else {
+          // Not logged in, show default semesters
+          setAvailableSemesters(["Semester 1", "Semester 2", "Semester 3", "Semester 4"]);
         }
       } catch (err) {
         setError("Failed to load courses. Please try again later.");
@@ -146,9 +151,33 @@ const Index = () => {
     setPendingCourse(null);
   };
 
-  const handleAddSemester = () => {
-    const nextSemesterNumber = availableSemesters.length + 1;
-    setAvailableSemesters([...availableSemesters, `Semester ${nextSemesterNumber}`]);
+  const handleAddSemester = async () => {
+    try {
+      const newSemester = await addSemester();
+      setAvailableSemesters([...availableSemesters, `Semester ${newSemester.semester_number}`]);
+      toast({ title: "Semester added", description: `Semester ${newSemester.semester_number} has been added.` });
+    } catch (err) {
+      toast({ 
+        title: "Failed to add semester", 
+        description: "You must be logged in to manage semesters.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const handleDeleteSemester = async () => {
+    try {
+      await deleteSemester();
+      // Remove the last semester from the list
+      setAvailableSemesters(availableSemesters.slice(0, -1));
+      toast({ title: "Semester deleted", description: "The semester has been removed." });
+    } catch (err: any) {
+      toast({ 
+        title: "Cannot delete semester", 
+        description: err.message || "Remove all courses from this semester first.", 
+        variant: "destructive" 
+      });
+    }
   };
 
   const handleRemoveCourse = async (courseId: number) => {
@@ -295,6 +324,7 @@ const Index = () => {
               onConfirmAdd={handleConfirmAddCourse}
               onCancelAdd={handleCancelAddCourse}
               onAddSemester={handleAddSemester}
+              onDeleteSemester={handleDeleteSemester}
             />
           </TabsContent>
         </Tabs>

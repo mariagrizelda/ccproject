@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, permissions
-from plannersvc.models import PlannedCourse
-from .serializers import PlannedCourseSerializer
+from django.db import models
+from plannersvc.models import PlannedCourse, Semester
+from .serializers import PlannedCourseSerializer, SemesterSerializer
 
 
 class HealthCheck(APIView):
@@ -10,6 +11,61 @@ class HealthCheck(APIView):
     
     def get(self, request):
         return Response({"status": "ok"})
+
+
+class SemestersView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        """Get all semesters for the user"""
+        semesters = Semester.objects.filter(user=request.user)
+        data = SemesterSerializer(semesters, many=True).data
+        return Response(data)
+
+    def post(self, request):
+        """Add a new semester"""
+        # Get the highest semester number for this user
+        max_semester = Semester.objects.filter(user=request.user).aggregate(
+            max_num=models.Max('semester_number')
+        )['max_num']
+        
+        next_semester_number = (max_semester or 0) + 1
+        
+        semester = Semester.objects.create(
+            user=request.user,
+            semester_number=next_semester_number
+        )
+        
+        return Response(
+            SemesterSerializer(semester).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    def delete(self, request):
+        """Delete the latest semester if it has no courses"""
+        # Get the highest semester number for this user
+        max_semester_obj = Semester.objects.filter(user=request.user).order_by('-semester_number').first()
+        
+        if not max_semester_obj:
+            return Response(
+                {"detail": "No semesters to delete"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Check if this semester has any courses
+        has_courses = PlannedCourse.objects.filter(
+            user=request.user,
+            semester=max_semester_obj.semester_number
+        ).exists()
+        
+        if has_courses:
+            return Response(
+                {"detail": "Cannot delete semester with courses. Remove all courses first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        max_semester_obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class PlannedCoursesView(APIView):

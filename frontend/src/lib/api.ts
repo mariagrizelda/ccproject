@@ -248,6 +248,45 @@ export async function deletePlannedCourse(courseId: number) {
   if (!res.ok && res.status !== 204) throw new Error(`Delete planned course failed: ${res.status}`);
 }
 
+// ===== Semesters =====
+export interface SemesterDTO {
+  id: number;
+  semester_number: number;
+  created_at: string;
+}
+
+export async function fetchSemesters(): Promise<SemesterDTO[]> {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/semesters/`, {
+    headers: { ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Fetch semesters failed: ${res.status}`);
+  return res.json();
+}
+
+export async function addSemester(): Promise<SemesterDTO> {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/semesters/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (!res.ok) throw new Error(`Add semester failed: ${res.status}`);
+  return res.json();
+}
+
+export async function deleteSemester(): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/planned-courses/semesters/`, {
+    method: "DELETE",
+    headers: { ...authHeaders() },
+  });
+  if (res.status === 401) throw new Error("unauthorized");
+  if (res.status === 400) {
+    const data = await res.json();
+    throw new Error(data.detail || "Cannot delete semester");
+  }
+  if (!res.ok && res.status !== 204) throw new Error(`Delete semester failed: ${res.status}`);
+}
+
 // ===== Course Reviews =====
 export interface CourseReview {
   id: number;

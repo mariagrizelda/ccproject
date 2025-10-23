@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from plannersvc.models import PlannedCourse
+from plannersvc.models import PlannedCourse, Semester
+
+
+class SemesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Semester
+        fields = ["id", "semester_number", "created_at"]
+        read_only_fields = ["created_at"]
 
 
 class PlannedCourseSerializer(serializers.ModelSerializer):
