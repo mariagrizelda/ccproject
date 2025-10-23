@@ -116,20 +116,20 @@ spec:
               python manage.py insert_data &&
               gunicorn backend.wsgi:application --bind 0.0.0.0:8002 --workers 3 --timeout 120
           livenessProbe:
-             httpGet:
-               path: /api/courses/health/
-               port: 8002
-             initialDelaySeconds: 30
-             periodSeconds: 10
-             timeoutSeconds: 5
-             failureThreshold: 3
+            httpGet:
+              path: /api/courses/health/
+              port: 8002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
           readinessProbe:
-             httpGet:
-               path: /api/courses/health/
-               port: 8002
-             initialDelaySeconds: 10
-             periodSeconds: 5
-             timeoutSeconds: 3
+            httpGet:
+              path: /api/courses/health/
+              port: 8002
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
           resources:
             requests:
               memory: "256Mi"
