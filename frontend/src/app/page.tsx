@@ -9,7 +9,7 @@ import SearchBar from "@/components/SearchBar";
 import CourseFilters from "@/components/CourseFilters";
 import CourseCard from "@/components/CourseCard";
 import DegreePlanner from "@/components/DegreePlanner";
-import { fetchCourses, getSemesters, getArea, getAssessment, fetchPlannedCourses, addOrUpdatePlannedCourse, updatePlannedCourseSemester, deletePlannedCourse, transformApiCourse } from "@/lib/api";
+import { fetchCourses, getSemesters, getArea, getAssessment, fetchPlannedCourses, addOrUpdatePlannedCourse, updatePlannedCourseSemester, deletePlannedCourse } from "@/lib/api";
 import { Course, PlannedCourse } from "@/types/course";
 import { useToast } from "@/hooks/use-toast";
 
@@ -57,11 +57,23 @@ const Index = () => {
         if (token) {
           try {
             const pcs = await fetchPlannedCourses();
-            const transformed = pcs.map((pc) => {
-              const course = transformApiCourse(pc.course as any);
-              return { ...course, plannedSemester: `Semester ${pc.semester}` } as PlannedCourse;
-            });
-            setPlannedCourses(transformed);
+            const transformed = await Promise.all(
+              pcs.map(async (pc) => {
+                // Find the full course data from the courses list
+                const course = fetchedCourses.find(c => c.id === pc.course_id);
+                if (course) {
+                  return { ...course, plannedSemester: `Semester ${pc.semester}` } as PlannedCourse;
+                }
+                // If not found in current list, create minimal course object
+                return {
+                  id: pc.course_id,
+                  code: pc.course_code,
+                  name: pc.course_name,
+                  plannedSemester: `Semester ${pc.semester}`,
+                } as PlannedCourse;
+              })
+            );
+            setPlannedCourses(transformed.filter(Boolean));
           } catch {
             // ignore if unauthorized
           }
@@ -115,7 +127,12 @@ const Index = () => {
     try {
       const match = /\d+/.exec(semester);
       const semNum = Number(match ? match[0] : 1);
-      await addOrUpdatePlannedCourse(pendingCourse.id, semNum);
+      await addOrUpdatePlannedCourse(
+        pendingCourse.id, 
+        pendingCourse.code, 
+        pendingCourse.name, 
+        semNum
+      );
       const plannedCourse: PlannedCourse = { ...pendingCourse, plannedSemester: semester };
       setPlannedCourses([...plannedCourses, plannedCourse]);
       setPendingCourse(null);

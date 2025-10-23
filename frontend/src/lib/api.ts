@@ -191,7 +191,9 @@ export async function fetchPrograms(level?: string, search?: string): Promise<Pr
 // ===== Planned courses =====
 export interface PlannedCourseDTO {
   id: number;
-  course: ApiCourse;
+  course_id: number;
+  course_code: string;
+  course_name: string;
   semester: number;
 }
 
@@ -204,11 +206,21 @@ export async function fetchPlannedCourses(): Promise<PlannedCourseDTO[]> {
   return res.json();
 }
 
-export async function addOrUpdatePlannedCourse(courseId: number, semester: number) {
+export async function addOrUpdatePlannedCourse(
+  courseId: number, 
+  courseCode: string, 
+  courseName: string, 
+  semester: number
+) {
   const res = await fetch(`${API_BASE_URL}/planned-courses/`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ course_id: courseId, semester }),
+    body: JSON.stringify({ 
+      course_id: courseId, 
+      course_code: courseCode, 
+      course_name: courseName, 
+      semester 
+    }),
   });
   if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`Add/update planned course failed: ${res.status}`);
