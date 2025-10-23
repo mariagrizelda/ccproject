@@ -1,7 +1,0 @@
-.env
-env/
-venv/
-.venv/
-.DS_Store
-
-run_scraping.sh
