@@ -48,7 +48,7 @@ spec:
         - name: NODE_ENV
           value: "production"
         - name: NEXT_PUBLIC_API_URL
-          value: "http://34.129.147.19/api"
+          value: "http://34.126.201.251/api"
         livenessProbe:
           httpGet:
             path: /api/health
