@@ -1,39 +1,50 @@
 #!/bin/bash
-# filepath: /Users/helga/ccproject/Wed_2pm_Team_05/Code/demo-rollback.sh
-
 set -e
 
-PROJECT_ID="model-obelisk-469607-r0"
 NAMESPACE="ccproject"
-DEPLOYMENT="auth-svc"
+DEPLOYMENT="catalog-svc"
+INITIAL_REPLICAS=2
+SCALED_REPLICAS=5
 
 kubectl get deployment $DEPLOYMENT -n $NAMESPACE
 echo ""
 
-kubectl get pods -n $NAMESPACE -l app=auth-svc -o wide
+kubectl get pods -n $NAMESPACE -l app=catalog-svc -o wide
 echo ""
 
-kubectl get deployment $DEPLOYMENT -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}'
+kubectl top pods -n $NAMESPACE -l app=catalog-svc 2>/dev/null || echo "Metrics not available yet"
 echo ""
+
+read -p "Press Enter to scale up to $SCALED_REPLICAS replicas..."
+echo ""
+
+kubectl scale deployment/$DEPLOYMENT --replicas=$SCALED_REPLICAS -n $NAMESPACE
+echo ""
+
+kubectl wait --for=condition=ready pod -l app=catalog-svc -n $NAMESPACE --timeout=120s
 echo ""
 
 
-echo "📜 Step 5: Deployment history"
-kubectl rollout history deployment/$DEPLOYMENT -n $NAMESPACE
+kubectl get deployment $DEPLOYMENT -n $NAMESPACE
 echo ""
 
-kubectl rollout undo deployment/$DEPLOYMENT -n $NAMESPACE
+kubectl get pods -n $NAMESPACE -l app=catalog-svc -o wide
 echo ""
 
-kubectl rollout status deployment/$DEPLOYMENT -n $NAMESPACE
+kubectl get endpoints catalog-service -n $NAMESPACE
 echo ""
 
-kubectl get pods -n $NAMESPACE -l app=auth-svc -o wide
+read -p "Press Enter to scale back down to $INITIAL_REPLICAS replicas..."
 echo ""
 
-kubectl get deployment $DEPLOYMENT -n $NAMESPACE -o jsonpath='{.spec.template.spec.containers[0].image}'
-echo ""
+kubectl scale deployment/$DEPLOYMENT --replicas=$INITIAL_REPLICAS -n $NAMESPACE
 echo ""
 
-kubectl rollout history deployment/$DEPLOYMENT -n $NAMESPACE
+sleep 5
+echo ""
+
+kubectl get deployment $DEPLOYMENT -n $NAMESPACE
+echo ""
+
+kubectl get pods -n $NAMESPACE -l app=catalog-svc
 echo ""
